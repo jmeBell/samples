@@ -1,0 +1,27 @@
+<launch>
+
+  <node pkg="turtlesim" name="tsim_node" type="turtlesim_node">
+  </node>
+
+  <node pkg="turtlesim" name="t_teleop_key" type="turtle_teleop_key">
+    <remap from="turtle1/cmd_vel" to="keyboard"/>
+  </node>
+
+  <node pkg="jbell-tech-challenge" name="tsim_move" type="turtlesim_move" output="screen">
+    <param name="MIN_X" type="double" value="0.01" />
+    <param name="MAX_X" type="double" value="11.07" />
+    <param name="MIN_Y" type="double" value="0.01" />
+    <param name="MAX_Y" type="double" value="11.07" />
+    <param name="MIN_THETA" type="double" value="-3.14159" />
+    <param name="MAX_THETA" type="double" value="3.14159" />
+    <param name="POS_TOLERANCE" type="double" value="0.1" />
+    <param name="ANGLE_TOLERANCE" type="double" value="0.01" />
+    <param name="POS_GAIN" type="double" value="2.0" />
+    <param name="ANGLE_GAIN" type="double" value="2.0" />
+    <param name="WAIT_AFTER_KEYS" type="int" value="125" />
+  </node>
+  
+  <node pkg='rqt_plot' name='rqt_plot' type='rqt_plot' args='/turtle1/pose/x:y:theta:linear_velocity:angular_velocity'/>
+
+</launch>
+
