@@ -8,8 +8,10 @@
 #include "cv_bridge/cv_bridge.h"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/image_encodings.hpp"
+#include "fsg_msgs/msg/segment.hpp"
+#include "fsg_msgs/msg/segment_array.hpp"
 
-// start from FSG main a
+//-------- start from FSG main a
 #include <iostream>
 #include <random>
 #include "GreedyMerger.h"
@@ -67,7 +69,7 @@ void drawClusters(cv::Mat &img,
     }
   }
 }
-// end from FSG main a
+//-------- end from FSG main a
 
 using std::placeholders::_1;
 
@@ -85,9 +87,12 @@ class FSG : public rclcpp::Node
       // set up image publisher
       image_pub = image_transport::create_publisher(this, "fsg_output");
 
+      // set up segment publisher
+      segment_pub = this->create_publisher<fsg_msgs::msg::SegmentArray>("/fsg_segments", 10);;
+
       // set up run time parameters
-      this->declare_parameter<double>("resize_factor", 0.25);
-      this->get_parameter("resize_factor", RESIZE_FACTOR);
+      this->declare_parameter<bool>("debug", true);
+      this->get_parameter("debug", DEBUG);
     }
 
   private:
@@ -99,7 +104,7 @@ class FSG : public rclcpp::Node
       cv::Mat img;
       cv_ptr->image.copyTo(img);
 
-
+      //******** start from FSG main b
       // Initialize the line segment merger
       GreedyMerger merger(img.size());
 
@@ -114,7 +119,7 @@ class FSG : public rclcpp::Node
 
       std::cout << "Detected " << detectedSegments.size() << " line segments with LSD" << std::endl;
       cv::segments(img, detectedSegments, CV_RGB(255, 0, 0), 1);
-      cv::imshow("Detected line segments", img);
+      //cv::imshow("Detected line segments", img);
       //cv::imwrite("../Detected_line_segments.png", img);
 
       // Detect the segment clusters
@@ -122,7 +127,7 @@ class FSG : public rclcpp::Node
       Segments mergedLines;
       merger.mergeSegments(detectedSegments, mergedLines, detectedClusters);
       drawClusters(img, detectedSegments, detectedClusters, 2);
-      cv::imshow("Segment groups", img);
+      //cv::imshow("Segment groups", img);
       //cv::imwrite("../Segment_groups.png", img);
 
       // Get large lines from groups of segments
@@ -133,16 +138,30 @@ class FSG : public rclcpp::Node
       cv::imshow("Obtained lines", img2);
       //cv::imwrite("../Obtained_lines.png", img2);
       cv::waitKey(1);
-
+      //******** end from FSG main b
 
       // publish image  
       auto out_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img).toImageMsg();
       out_msg->header.frame_id = "map";
       image_pub.publish(out_msg);
+
+      // populate and publish segments
+      fsg_msgs::msg::SegmentArray output_segments;
+      for( auto s: filteredSegments ) {
+        fsg_msgs::msg::Segment a_segment;
+        a_segment.ax = s[0];
+        a_segment.ay = s[1];
+        a_segment.bx = s[2];
+        a_segment.by = s[3];
+        output_segments.a_segment.push_back(a_segment);
+      }
+      segment_pub->publish(output_segments);
     }
+
     image_transport::Subscriber image_sub;
     image_transport::Publisher image_pub;
-    double RESIZE_FACTOR;
+    rclcpp::Publisher<fsg_msgs::msg::SegmentArray>::SharedPtr segment_pub;
+    bool DEBUG;
 };
 
 int main(int argc, char * argv[])

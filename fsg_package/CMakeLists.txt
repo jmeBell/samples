@@ -23,6 +23,7 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
+find_package(fsg_msgs REQUIRED)
 
 add_executable(test_input src/test_input.cpp)
 ament_target_dependencies(test_input rclcpp std_msgs image_transport cv_bridge "OpenCV")
@@ -39,7 +40,7 @@ add_library(fsg_lib ${LIB_SOURCES})
 target_link_libraries(fsg_lib ${OpenCV_LIBS})
 
 add_executable(fsg src/fsg.cpp)
-ament_target_dependencies(fsg rclcpp std_msgs image_transport cv_bridge "OpenCV")
+ament_target_dependencies(fsg rclcpp std_msgs image_transport cv_bridge fsg_msgs "OpenCV")
 target_link_libraries(fsg fsg_lib ${OpenCV_LIBRARIES})
 
 target_include_directories(fsg PUBLIC
